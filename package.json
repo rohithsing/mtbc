@@ -1,0 +1,31 @@
+{
+  "name": "mtbc",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rohithsing/mtbc.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rohithsing/mtbc/issues"
+  },
+  "homepage": "https://github.com/rohithsing/mtbc#readme",
+  "description": "",
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "@prisma/config": "^7.7.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "prisma": "^5.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0"
+  }
+}

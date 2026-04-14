@@ -1,0 +1,82 @@
+// =========================
+// DATABASE CONFIG
+// =========================
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = "mysql://movie_booking_system-313839047c:movie_booking_system@mysql.us.stackcp.com:42750/movie_booking_system-313839047c"
+
+}
+
+// =========================
+// MODELS
+// =========================
+
+model Movie {
+  movie_id     Int      @id @default(autoincrement())
+  title        String
+  duration     Int?
+  shows        Show[]
+}
+
+model Screen {
+  screen_id    Int      @id @default(autoincrement())
+  screen_name  String
+  total_seats  Int
+  seats        Seat[]
+  shows        Show[]
+}
+
+model Seat {
+  seat_id     Int     @id @default(autoincrement())
+  seat_number String
+  screen_id   Int
+  screen      Screen  @relation(fields: [screen_id], references: [screen_id])
+  bookings    BookingSeat[]
+}
+
+model Show {
+  show_id    Int      @id @default(autoincrement())
+  movie_id   Int
+  screen_id  Int
+  show_time  DateTime
+  price      Float
+
+  movie      Movie    @relation(fields: [movie_id], references: [movie_id])
+  screen     Screen   @relation(fields: [screen_id], references: [screen_id])
+  bookings   Booking[]
+}
+
+model User {
+  user_id   Int      @id @default(autoincrement())
+  name      String?
+  email     String   @unique
+  phone     String?
+  bookings  Booking[]
+}
+
+model Booking {
+  booking_id   Int      @id @default(autoincrement())
+  user_id      Int
+  show_id      Int
+  total_amount Float
+  status       String   @default("Booked")
+
+  user         User     @relation(fields: [user_id], references: [user_id])
+  show         Show     @relation(fields: [show_id], references: [show_id])
+  seats        BookingSeat[]
+}
+
+model BookingSeat {
+  id         Int     @id @default(autoincrement())
+  booking_id Int
+  seat_id    Int
+
+  booking    Booking @relation(fields: [booking_id], references: [booking_id])
+  seat       Seat    @relation(fields: [seat_id], references: [seat_id])
+
+  @@unique([booking_id, seat_id])
+}

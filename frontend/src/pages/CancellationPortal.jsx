@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 const CancellationPortal = ({ user }) => {
     const { bookingId } = useParams();
     const navigate = useNavigate();
-    
+
     const [booking, setBooking] = useState(null);
     const [loading, setLoading] = useState(true);
     const [selectedToCancel, setSelectedToCancel] = useState([]);
@@ -23,192 +23,219 @@ const CancellationPortal = ({ user }) => {
             const found = res.data.find(b => b.booking_id === parseInt(bookingId));
             setBooking(found);
         })
-        .catch(() => toast.error("Failed to load booking details"))
+        .catch(() => toast.error("Failed to load booking"))
         .finally(() => setLoading(false));
     }, [bookingId]);
 
-    if (loading) return <div className="min-h-screen bg-cancel-bg text-white flex items-center justify-center text-xl">Accessing secure portal...</div>;
-    
+    if (loading) return (
+        <div className="bms-loading">
+            <div className="spinner"></div>
+            <p>Accessing secure portal...</p>
+        </div>
+    );
+
     if (!booking) return (
-        <div className="min-h-screen bg-cancel-bg text-cancel-danger flex flex-col items-center justify-center gap-4">
-            <p className="text-xl font-bold">Booking Record Not Found.</p>
-            <button onClick={() => navigate('/movies')} className="text-sm underline text-gray-400 hover:text-white transition">Return to Movies</button>
+        <div className="bms-loading">
+            <p style={{ color: '#cc0000', fontSize: 18, fontWeight: 600 }}>Booking not found.</p>
+            <button
+                onClick={() => navigate('/movies')}
+                style={{ color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, textDecoration: 'underline', marginTop: 8 }}
+            >
+                Return to Movies
+            </button>
         </div>
     );
 
     const activeSeats = booking.seats.filter(s => s.status === 'Active');
     const isTotallyCancelled = booking.status === "Cancelled" || activeSeats.length === 0;
-
-    // Check if show is within 1 hour
     const showTime = new Date(booking.show.show_time);
-    const now = new Date();
-    const timeDiffMs = showTime.getTime() - now.getTime();
-    const isWithinOneHour = timeDiffMs < 60 * 60 * 1000;
+    const isWithinOneHour = (showTime.getTime() - Date.now()) < 60 * 60 * 1000;
 
-    const handleToggle = (seatId) => {
-        setSelectedToCancel(prev => 
+    const handleToggle = (seatId) =>
+        setSelectedToCancel(prev =>
             prev.includes(seatId) ? prev.filter(id => id !== seatId) : [...prev, seatId]
         );
-    }
 
     const handleCancel = () => {
-        if(selectedToCancel.length === 0) return toast.error("Select tickets to cancel");
-        
-        if(!window.confirm("WARNING: No refunds are issued. Proceed with cancellation?")) return;
+        if (selectedToCancel.length === 0) return toast.error("Select seats to cancel");
+        if (!window.confirm("WARNING: No refunds will be issued. Proceed?")) return;
 
         setCancelling(true);
         cancelBooking(bookingId, { seat_ids: selectedToCancel })
-            .then(res => {
-                toast.success("Seats successfully cancelled");
+            .then(() => {
+                toast.success("Seats cancelled successfully");
                 setBooking(prev => {
-                    const newSeats = prev.seats.map(s => selectedToCancel.includes(s.seat_id) ? {...s, status: 'Cancelled'} : s);
-                    const remainingActive = newSeats.filter(s => s.status === 'Active');
+                    const newSeats = prev.seats.map(s =>
+                        selectedToCancel.includes(s.seat_id) ? { ...s, status: 'Cancelled' } : s
+                    );
+                    const remaining = newSeats.filter(s => s.status === 'Active');
                     return {
-                        ...prev, 
+                        ...prev,
                         seats: newSeats,
-                        status: remainingActive.length === 0 ? "Cancelled" : "Partially Cancelled",
-                        total_amount: remainingActive.length * prev.show.price
-                    }
+                        status: remaining.length === 0 ? "Cancelled" : "Partially Cancelled",
+                        total_amount: remaining.length * prev.show.price
+                    };
                 });
                 setSelectedToCancel([]);
             })
-            .catch(err => {
-                toast.error(err.response?.data?.error || "Error executing cancellation");
-            })
+            .catch(err => toast.error(err.response?.data?.error || "Cancellation failed"))
             .finally(() => setCancelling(false));
-    }
+    };
+
+    const statusClass =
+        booking.status === 'Cancelled' ? 'badge-bms badge-cancelled' :
+        booking.status === 'Partially Cancelled' ? 'badge-bms badge-partial' :
+        'badge-bms badge-active';
 
     return (
-        <div className="min-h-screen bg-cancel-bg text-gray-200 font-sans p-6">
-            <div className="max-w-3xl mx-auto mt-10">
-                <header className="mb-10 text-center">
-                    <h1 className="text-3xl font-bold tracking-[0.2em] text-white uppercase flex flex-col items-center gap-2">
-                        <span>Cancellation</span>
-                        <span className="text-cancel-danger drop-shadow-[0_0_15px_rgba(220,38,38,0.5)]">Portal</span>
-                    </h1>
-                </header>
+        <div className="cancel-page-bms">
 
-                <div className="glass-dark rounded-xl p-8 shadow-2xl relative overflow-hidden">
-                    {/* Warning Tape Decoration */}
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cancel-danger to-transparent"></div>
-                    
-                    {/* Booking Info Header */}
-                    <div className="mb-6 pb-6 border-b border-gray-800">
-                        <div className="flex justify-between items-start mb-4">
-                            <div>
-                                <p className="text-gray-500 uppercase text-xs tracking-widest mb-1">Booking Ref</p>
-                                <p className="text-2xl font-bold text-white">#{booking.booking_id}</p>
-                            </div>
-                            <div className="text-right">
-                                <span className={`px-4 py-1 rounded inline-block font-semibold text-xs uppercase tracking-wider
-                                    ${booking.status === 'Cancelled' ? 'bg-red-900/50 text-red-400 border border-red-800/50' : 
-                                      booking.status === 'Partially Cancelled' ? 'bg-yellow-900/50 text-yellow-400 border border-yellow-800/50' : 
-                                      'bg-green-900/50 text-green-400 border border-green-800/50'}
-                                `}>
-                                    {booking.status}
-                                </span>
-                            </div>
-                        </div>
-                        
-                        {/* Show Details */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                            <div>
-                                <p className="text-gray-500 uppercase text-xs tracking-wider mb-1">Movie</p>
-                                <p className="text-white font-medium">{booking.show?.movie?.title || "N/A"}</p>
-                            </div>
-                            <div>
-                                <p className="text-gray-500 uppercase text-xs tracking-wider mb-1">Screen</p>
-                                <p className="text-white font-medium">{booking.show?.screen?.screen_name || "N/A"}</p>
-                            </div>
-                            <div>
-                                <p className="text-gray-500 uppercase text-xs tracking-wider mb-1">Show Date</p>
-                                <p className="text-white font-medium">{format(showTime, 'dd MMM yyyy')}</p>
-                            </div>
-                            <div>
-                                <p className="text-gray-500 uppercase text-xs tracking-wider mb-1">Show Time</p>
-                                <p className="text-white font-medium">{format(showTime, 'hh:mm a')}</p>
-                            </div>
-                        </div>
-                        {booking.booked_at && (
-                            <p className="text-gray-600 text-xs mt-3">Booked on: {format(new Date(booking.booked_at), 'dd MMM yyyy, hh:mm a')}</p>
-                        )}
+            {/* Header */}
+            <div style={{ maxWidth: 820, margin: '0 auto 28px', textAlign: 'center', paddingTop: 10 }}>
+                <div style={{ marginBottom: 10 }}>
+                    <span style={{ fontSize: 20, fontWeight: 700, color: '#fff' }}>
+                        Picture<span style={{ color: '#cc0000' }}>Dekho</span>
+                    </span>
+                </div>
+                <h1 className="cancel-page-title">
+                    Cancellation <span>Portal</span>
+                </h1>
+                <p className="cancel-page-sub">Manage your ticket cancellations</p>
+            </div>
+
+            {/* Main Card */}
+            <div className="cancel-card-bms">
+
+                {/* Booking ID + Status */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+                    <div>
+                        <p style={{ fontSize: 10, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 4 }}>
+                            Booking Reference
+                        </p>
+                        <p style={{ fontSize: 26, fontWeight: 700, color: '#fff' }}>#{booking.booking_id}</p>
                     </div>
+                    <span className={statusClass}>{booking.status}</span>
+                </div>
 
-                    {isTotallyCancelled ? (
-                        <div className="text-center py-12">
-                            <p className="text-gray-500 text-lg">This booking has been fully cancelled.</p>
-                            <button onClick={() => navigate('/movies')} className="mt-6 text-sm underline text-gray-400 hover:text-white transition">Book New Tickets</button>
+                {/* Show Details */}
+                <div className="cancel-info-grid">
+                    {[
+                        { label: 'Movie', value: booking.show?.movie?.title || 'N/A' },
+                        { label: 'Screen', value: booking.show?.screen?.screen_name || 'N/A' },
+                        { label: 'Date', value: format(showTime, 'dd MMM yyyy') },
+                        { label: 'Time', value: format(showTime, 'hh:mm a') },
+                    ].map(item => (
+                        <div className="cancel-info-item" key={item.label}>
+                            <label>{item.label}</label>
+                            <p>{item.value}</p>
                         </div>
-                    ) : (
-                        <>
-                            {/* 1-Hour Warning */}
-                            {isWithinOneHour && (
-                                <div className="bg-red-950/50 border border-red-800/50 p-4 mb-6 rounded-lg text-center">
-                                    <p className="text-red-400 font-bold uppercase tracking-wider text-sm">⚠️ Cancellation Blocked</p>
-                                    <p className="text-gray-400 text-xs mt-1">This show starts within 1 hour. Cancellation is no longer permitted.</p>
-                                </div>
-                            )}
+                    ))}
+                </div>
 
-                            <div className="mb-8">
-                                <h3 className="text-lg font-medium text-white mb-4">Select tickets to void</h3>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                    {activeSeats.map(bs => {
-                                        const isSelected = selectedToCancel.includes(bs.seat_id);
-                                        return (
-                                            <button 
-                                                key={bs.id}
-                                                onClick={() => handleToggle(bs.seat_id)}
-                                                disabled={isWithinOneHour}
-                                                className={`
-                                                    py-4 px-2 rounded-lg border transition-all flex flex-col items-center group
-                                                    ${isWithinOneHour ? 'opacity-50 cursor-not-allowed bg-gray-800 border-gray-700 text-gray-500' :
-                                                      isSelected 
-                                                        ? 'bg-cancel-danger/90 border-cancel-danger text-white hover:bg-cancel-danger' 
-                                                        : 'bg-cancel-surface border-gray-700 hover:border-cancel-danger text-gray-300'}
-                                                `}
-                                            >
-                                                <span className="text-xs text-gray-500 uppercase tracking-wider mb-1">Seat</span>
-                                                <span className="text-xl font-bold">{bs.seat.seat_number}</span>
-                                                <span className="text-xs text-gray-500 mt-1">₹{booking.show.price}</span>
-                                            </button>
-                                        )
-                                    })}
-                                </div>
-                            </div>
+                {booking.booked_at && (
+                    <p style={{ fontSize: 11, color: '#4b5563', marginBottom: 24 }}>
+                        Booked on: {format(new Date(booking.booked_at), 'dd MMM yyyy, hh:mm a')}
+                    </p>
+                )}
 
-                            <div className="bg-red-950/30 border-l-4 border-cancel-danger p-4 mb-8 rounded-r-md">
-                                <p className="text-red-400 text-sm font-medium uppercase tracking-wider mb-1">Strict Policy Enforcement</p>
-                                <p className="text-gray-400 text-xs leading-relaxed">
-                                    • Cancellation within 1 hour of screening is NOT allowed.<br/>
-                                    • NO financial refunds will be processed for any cancellations.<br/>
-                                    • Cancelled seats are released back to the public pool.
+                {/* Body */}
+                {isTotallyCancelled ? (
+                    <div style={{ textAlign: 'center', padding: '48px 0' }}>
+                        <p style={{ color: '#6b7280', fontSize: 16, marginBottom: 20 }}>
+                            This booking has been fully cancelled.
+                        </p>
+                        <button
+                            onClick={() => navigate('/movies')}
+                            className="btn-cancel-ghost"
+                        >
+                            Browse Movies
+                        </button>
+                    </div>
+                ) : (
+                    <>
+                        {/* 1-hour block warning */}
+                        {isWithinOneHour && (
+                            <div style={{
+                                background: 'rgba(185,28,28,0.2)',
+                                border: '1px solid rgba(239,68,68,0.3)',
+                                borderRadius: 8,
+                                padding: '14px 18px',
+                                marginBottom: 24,
+                                textAlign: 'center'
+                            }}>
+                                <p style={{ color: '#fca5a5', fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1 }}>
+                                    ⚠️ Cancellation Blocked
+                                </p>
+                                <p style={{ color: '#9ca3af', fontSize: 12, marginTop: 4 }}>
+                                    Show starts within 1 hour — cancellations are locked.
                                 </p>
                             </div>
+                        )}
 
-                            <div className="flex items-center justify-between mt-10">
-                                <div>
-                                    <p className="text-gray-500 text-xs uppercase mb-1">Tickets to Cancel</p>
-                                    <p className="text-white font-bold text-xl">{selectedToCancel.length}</p>
-                                </div>
-                                <div className="flex gap-3">
+                        {/* Seat selection */}
+                        <h3 style={{ color: '#d1d5db', fontSize: 14, fontWeight: 500, marginBottom: 14 }}>
+                            Select seats to void
+                        </h3>
+                        <div className="cancel-seat-grid">
+                            {activeSeats.map(bs => {
+                                const isSelected = selectedToCancel.includes(bs.seat_id);
+                                return (
                                     <button
-                                        onClick={() => navigate('/movies')}
-                                        className="border border-gray-600 text-gray-400 hover:text-white hover:border-gray-400 font-medium py-3 px-6 rounded transition"
+                                        key={bs.id}
+                                        id={`void-seat-${bs.seat?.seat_number}`}
+                                        onClick={() => handleToggle(bs.seat_id)}
+                                        disabled={isWithinOneHour}
+                                        className={`cancel-seat-tile${isSelected ? ' selected-void' : ''}`}
                                     >
-                                        Back to Movies
+                                        <span className="tile-label">Seat</span>
+                                        <span className="tile-num">{bs.seat?.seat_number}</span>
+                                        <span className="tile-price">₹{booking.show.price}</span>
                                     </button>
-                                    <button
-                                        onClick={handleCancel}
-                                        disabled={cancelling || selectedToCancel.length === 0 || isWithinOneHour}
-                                        className="bg-cancel-danger hover:bg-red-700 text-white font-bold uppercase tracking-wider py-3 px-8 rounded disabled:opacity-50 disabled:cursor-not-allowed transition shadow-[0_0_15px_rgba(220,38,38,0.3)] hover:shadow-[0_0_25px_rgba(220,38,38,0.5)]"
-                                    >
-                                        {cancelling ? "Executing Void..." : "Void Tickets"}
-                                    </button>
-                                </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Policy */}
+                        <div className="policy-box">
+                            <p className="policy-title">Cancellation Policy</p>
+                            <ul>
+                                <li>• Cancellation within 1 hour of screening is NOT permitted.</li>
+                                <li>• NO financial refunds will be issued for any cancellation.</li>
+                                <li>• Voided seats are immediately released to the public.</li>
+                            </ul>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="cancel-actions">
+                            <div className="ticket-count">
+                                <label>Tickets to Void</label>
+                                <span>{selectedToCancel.length}</span>
                             </div>
-                        </>
-                    )}
-                </div>
+
+                            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                                <button
+                                    onClick={() => navigate('/movies')}
+                                    className="btn-cancel-ghost"
+                                >
+                                    Back to Movies
+                                </button>
+                                <button
+                                    id="void-tickets-btn"
+                                    onClick={handleCancel}
+                                    disabled={cancelling || selectedToCancel.length === 0 || isWithinOneHour}
+                                    className="btn-void"
+                                >
+                                    {cancelling ? 'Processing...' : 'Void Tickets'}
+                                </button>
+                            </div>
+                        </div>
+                    </>
+                )}
+            </div>
+
+            {/* Footer */}
+            <div className="bms-footer" style={{ marginTop: 32 }}>
+                &copy; {new Date().getFullYear()} &nbsp;<span>PictureDekho</span>&nbsp; MTBC
             </div>
         </div>
     );

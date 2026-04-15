@@ -9,53 +9,139 @@ const ShowSelection = () => {
     const navigate = useNavigate();
     const [shows, setShows] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [selectedDate, setSelectedDate] = useState(null);
 
     useEffect(() => {
         getShowsByMovie(movieId)
-            .then(res => setShows(res.data))
+            .then(res => {
+                setShows(res.data);
+                if (res.data.length > 0) {
+                    const firstDate = format(new Date(res.data[0].show_time), 'yyyy-MM-dd');
+                    setSelectedDate(firstDate);
+                }
+            })
             .catch(() => toast.error("Failed to load shows"))
             .finally(() => setLoading(false));
     }, [movieId]);
 
-    if (loading) return <div className="min-h-screen text-book-brand flex items-center justify-center font-bold text-2xl">Loading Shows...</div>;
+    if (loading) return (
+        <div className="bms-loading">
+            <div className="spinner"></div>
+            <p>Loading Shows...</p>
+        </div>
+    );
+
+    const movieTitle = shows.length > 0 ? (shows[0]?.movie?.title || 'Show Times') : 'Show Times';
+
+    // Get unique dates from shows
+    const uniqueDates = [...new Set(
+        shows.map(s => format(new Date(s.show_time), 'yyyy-MM-dd'))
+    )].sort();
+
+    // Filter shows by selected date
+    const filteredShows = selectedDate
+        ? shows.filter(s => format(new Date(s.show_time), 'yyyy-MM-dd') === selectedDate)
+        : shows;
 
     return (
-        <div className="min-h-screen bg-book-bg font-sans pb-24 text-gray-800">
-            <header className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-6 shadow-md text-center">
-                <button onClick={() => navigate('/movies')} className="absolute left-6 text-sm underline opacity-80 hover:opacity-100">&larr; Back</button>
-                <h1 className="text-3xl font-bold tracking-tight">Select Show Timing</h1>
-                <p className="text-indigo-200 opacity-90 mt-1">Pick your preferred screen and time</p>
-            </header>
+        <div style={{ minHeight: '100vh', background: '#f0f0f5' }}>
 
-            <main className="max-w-4xl mx-auto px-4 mt-8">
-                {shows.length === 0 ? (
-                    <div className="glass p-12 text-center rounded-3xl mt-10 text-gray-500 font-medium text-lg">No shows currently found for this movie.</div>
+            {/* ── Navbar ── */}
+            <nav className="bms-nav">
+                <div className="logo">Picture<span>Dekho</span></div>
+                <div className="nav-spacer" />
+                <button
+                    onClick={() => navigate('/movies')}
+                    className="nav-user"
+                    style={{ background: 'none', border: 'none', fontFamily: 'Poppins, sans-serif' }}
+                >
+                    ← All Movies
+                </button>
+            </nav>
+
+            {/* ── Movie Header ── */}
+            <div className="show-page-header">
+                <button
+                    className="back-link"
+                    onClick={() => navigate('/movies')}
+                >
+                    ← Back to Movies
+                </button>
+                <h1>{movieTitle}</h1>
+                <p>Select a date and show time to proceed</p>
+            </div>
+
+            {/* ── Date Tabs ── */}
+            {uniqueDates.length > 0 && (
+                <div className="date-tabs">
+                    {uniqueDates.map(dateStr => {
+                        const d = new Date(dateStr);
+                        return (
+                            <button
+                                key={dateStr}
+                                id={`date-tab-${dateStr}`}
+                                className={`date-tab${selectedDate === dateStr ? ' active' : ''}`}
+                                onClick={() => setSelectedDate(dateStr)}
+                            >
+                                <span className="day">{format(d, 'EEE')}</span>
+                                <span className="date-num">{format(d, 'd')}</span>
+                                <span className="month">{format(d, 'MMM')}</span>
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
+
+            {/* ── Shows ── */}
+            <div className="bms-section">
+                {filteredShows.length === 0 ? (
+                    <div style={{
+                        background: '#fff',
+                        borderRadius: 8,
+                        padding: '48px 24px',
+                        textAlign: 'center',
+                        color: '#888',
+                        fontSize: 15,
+                        boxShadow: '0 2px 12px rgba(0,0,0,0.08)'
+                    }}>
+                        No shows available for this date.
+                    </div>
                 ) : (
-                    <div className="flex flex-col gap-4 mt-10">
-                        {shows.map(show => (
-                            <div key={show.show_id} className="glass rounded-xl p-6 flex flex-col md:flex-row items-center justify-between transition hover:shadow-lg">
-                                <div className="mb-4 md:mb-0 text-center md:text-left">
-                                    <h3 className="text-xl font-bold text-indigo-900 mb-1">{format(new Date(show.show_time), 'EEEE, MMMM do, yyyy')}</h3>
-                                    <p className="text-3xl font-black text-gray-800 mb-1">{format(new Date(show.show_time), 'hh:mm a')}</p>
-                                    <p className="text-sm text-gray-500 uppercase tracking-widest">{show.screen.screen_name}</p>
+                    filteredShows.map(show => (
+                        <div
+                            key={show.show_id}
+                            className="show-venue-card"
+                            id={`show-${show.show_id}`}
+                        >
+                            <div className="show-venue-header">
+                                <div>
+                                    <h3>🖥️ {show.screen.screen_name}</h3>
+                                    <p style={{ fontSize: 12, color: '#888', marginTop: 3 }}>
+                                        {format(new Date(show.show_time), 'EEEE, MMMM do yyyy')}
+                                    </p>
                                 </div>
-                                <div className="flex items-center gap-6">
-                                    <div className="text-right hidden md:block">
-                                        <p className="text-xs text-gray-500 uppercase tracking-wider">Ticket Cost</p>
-                                        <p className="text-xl font-bold text-gray-800">₹{show.price}</p>
-                                    </div>
-                                    <button 
-                                        onClick={() => navigate(`/booking/${show.show_id}`)}
-                                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-full shadow-md transition transform hover:scale-105"
-                                    >
-                                        Select Seats
-                                    </button>
+                                <div className="price-info">
+                                    Tickets from &nbsp;<strong>₹{show.price}</strong>
                                 </div>
                             </div>
-                        ))}
-                    </div>
+
+                            <div className="show-times-row">
+                                <button
+                                    className="show-time-chip"
+                                    onClick={() => navigate(`/booking/${show.show_id}`)}
+                                >
+                                    {format(new Date(show.show_time), 'hh:mm a')}
+                                </button>
+                            </div>
+                        </div>
+                    ))
                 )}
-            </main>
+            </div>
+
+            {/* ── Footer ── */}
+            <div className="bms-footer">
+                &copy; {new Date().getFullYear()} &nbsp;<span>BookMyShow</span>&nbsp; MTBC
+            </div>
         </div>
     );
 };

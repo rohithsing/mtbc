@@ -10,6 +10,9 @@ import CancellationPortal from "./pages/CancellationPortal";
 
 import MoviesList from "./pages/MoviesList";
 import ShowSelection from "./pages/ShowSelection";
+import BookingDetails from "./pages/BookingDetails";
+import FindBooking from "./pages/FindBooking";
+import UserBookings from "./pages/UserBookings";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -46,18 +49,21 @@ function App() {
   }, []);
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return <div className="loading-screen">Loading...</div>;
   }
 
   return (
     <Router>
       <Toaster position="top-right" />
       <Routes>
-        <Route path="/" element={user ? <Navigate to="/movies" /> : <Login />} />
+        <Route path="/" element={user ? <Navigate to="/movies" /> : <Login setUser={setUser} />} />
         <Route path="/movies" element={user ? <MoviesList user={user} /> : <Navigate to="/" />} />
         <Route path="/movie/:movieId" element={user ? <ShowSelection /> : <Navigate to="/" />} />
         <Route path="/booking/:showId" element={user ? <SeatSelection user={user} /> : <Navigate to="/" />} />
         <Route path="/cancel/:bookingId" element={user ? <CancellationPortal user={user}/> : <Navigate to="/" />} />
+        <Route path="/booking-details/:bookingId" element={user ? <BookingDetails user={user}/> : <Navigate to="/" />} />
+        <Route path="/find-booking" element={user ? <FindBooking /> : <Navigate to="/" />} />
+        <Route path="/my-bookings" element={user ? <UserBookings user={user} /> : <Navigate to="/" />} />
       </Routes>
     </Router>
   );

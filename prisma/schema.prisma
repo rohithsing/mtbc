@@ -7,8 +7,7 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  url      = "mysql://movie_booking_system-313839047c:movie_booking_system@mysql.us.stackcp.com:42750/movie_booking_system-313839047c"
-
+  url      = env("DATABASE_URL")
 }
 
 // =========================
@@ -64,6 +63,7 @@ model Booking {
   show_id      Int
   total_amount Float
   status       String   @default("Booked")
+  booked_at    DateTime @default(now())
 
   user         User     @relation(fields: [user_id], references: [user_id])
   show         Show     @relation(fields: [show_id], references: [show_id])
@@ -71,9 +71,11 @@ model Booking {
 }
 
 model BookingSeat {
-  id         Int     @id @default(autoincrement())
-  booking_id Int
-  seat_id    Int
+  id            Int       @id @default(autoincrement())
+  booking_id    Int
+  seat_id       Int
+  status        String    @default("Active")
+  cancelled_at  DateTime?
 
   booking    Booking @relation(fields: [booking_id], references: [booking_id])
   seat       Seat    @relation(fields: [seat_id], references: [seat_id])

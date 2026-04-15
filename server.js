@@ -7,9 +7,28 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
-app.use('/booking', require('./routes/bookingRoutes'));
-app.use('/movies', require('./routes/movieRoutes'));
-app.use('/users', require('./routes/userRoutes'));
+const authRoutes = require('./routes/authRoutes');
+const bookingRoutes = require('./routes/bookingRoutes');
+const movieRoutes = require('./routes/movieRoutes');
+const userRoutes = require('./routes/userRoutes');
+
+// Auth & Session Middleware
+const session = require('express-session');
+const passport = require('./config/passport');
+require('dotenv').config();
+
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'secret',
+  resave: false,
+  saveUninitialized: false,
+}));
+app.use(passport.initialize());
+app.use(passport.session());
+
+app.use('/auth', authRoutes);
+app.use('/booking', bookingRoutes);
+app.use('/movies', movieRoutes);
+app.use('/users', userRoutes);
 
 // Root route (optional, for testing)
 app.get('/', (req, res) => {

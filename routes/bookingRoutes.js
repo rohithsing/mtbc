@@ -8,11 +8,9 @@ const {
   cancelBooking     // ✅ (if used)
 } = require('../controllers/bookingController');
 
-router.post('/create', createBooking);
-router.get('/getBookings', getBookings);
-
-// ✅ THESE WERE CAUSING ERROR
-router.get('/seats/:showId', getSeatsByShow);
-router.delete('/:id', cancelBooking);
+router.post('/', createBooking);
+router.get('/', getBookings);
+router.get('/show/:showId/seats', getSeatsByShow);
+router.post('/:id/cancel', cancelBooking);
 
 module.exports = router;

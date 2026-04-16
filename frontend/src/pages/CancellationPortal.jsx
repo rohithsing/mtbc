@@ -94,7 +94,7 @@ const CancellationPortal = ({ user }) => {
             {/* Header */}
             <div style={{ maxWidth: 820, margin: '0 auto 28px', textAlign: 'center', paddingTop: 10 }}>
                 <div style={{ marginBottom: 10 }}>
-                    <span style={{ fontSize: 20, fontWeight: 700, color: '#fff' }}>
+                    <span style={{ fontSize: 20, fontWeight: 700, color: '#0b0a0aff' }}>
                         Picture<span style={{ color: '#cc0000' }}>Dekho</span>
                     </span>
                 </div>
@@ -110,10 +110,10 @@ const CancellationPortal = ({ user }) => {
                 {/* Booking ID + Status */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
                     <div>
-                        <p style={{ fontSize: 10, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 4 }}>
+                        <p style={{ fontSize: 10, color: '#0b0c0eff', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 4 }}>
                             Booking Reference
                         </p>
-                        <p style={{ fontSize: 26, fontWeight: 700, color: '#fff' }}>#{booking.booking_id}</p>
+                        <p style={{ fontSize: 26, fontWeight: 700, color: '#050404ff' }}>#{booking.booking_id}</p>
                     </div>
                     <span className={statusClass}>{booking.status}</span>
                 </div>
@@ -144,14 +144,14 @@ const CancellationPortal = ({ user }) => {
                     <div style={{ padding: '24px 0' }}>
                         {isPartiallyCancelled && (
                             <div style={{
-                                background: 'rgba(255,165,0,0.2)',
-                                border: '1px solid rgba(255,165,0,0.3)',
+                                background: 'rgba(7, 6, 6, 0.2)',
+                                border: '1px solid rgba(60, 40, 3, 0.3)',
                                 borderRadius: 8,
                                 padding: '14px 18px',
                                 marginBottom: 24,
                                 textAlign: 'center'
                             }}>
-                                <p style={{ color: '#ffb732', fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1 }}>
+                                <p style={{ color: '#442f08ff', fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1 }}>
                                     ⚠️ Cancellation per booking allowed only once
                                 </p>
                             </div>
@@ -198,7 +198,7 @@ const CancellationPortal = ({ user }) => {
                         )}
 
                         {/* Seat selection */}
-                        <h3 style={{ color: '#d1d5db', fontSize: 14, fontWeight: 500, marginBottom: 14 }}>
+                        <h3 style={{ color: '#020305ff', fontSize: 14, fontWeight: 500, marginBottom: 14 }}>
                             Select seats to void
                         </h3>
                         <div className="cancel-seat-grid">

@@ -17,7 +17,7 @@ const Login = ({ setUser }) => {
 
                 {/* Brand */}
                 <div className="bms-login-logo">
-                    Book<span>My</span>Show
+                    Picture<span>Dekho</span>
                 </div>
                 <p style={{ fontSize: 11, color: '#cc0000', fontWeight: 600, letterSpacing: 2, marginBottom: 16 }}>
                     MTBC — MOVIE TICKET BOOKING CONSOLE

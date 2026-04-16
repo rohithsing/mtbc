@@ -48,6 +48,7 @@ const CancellationPortal = ({ user }) => {
 
     const activeSeats = booking.seats.filter(s => s.status === 'Active');
     const isTotallyCancelled = booking.status === "Cancelled" || activeSeats.length === 0;
+    const isPartiallyCancelled = booking.status === "Partially Cancelled";
     const showTime = new Date(booking.show.show_time);
     const isWithinOneHour = (showTime.getTime() - Date.now()) < 60 * 60 * 1000;
 
@@ -58,7 +59,7 @@ const CancellationPortal = ({ user }) => {
 
     const handleCancel = () => {
         if (selectedToCancel.length === 0) return toast.error("Select seats to cancel");
-        if (!window.confirm("WARNING: No refunds will be issued. Proceed?")) return;
+        if (!window.confirm("Are you sure you want to cancel these tickets?")) return;
 
         setCancelling(true);
         cancelBooking(bookingId, { seat_ids: selectedToCancel })
@@ -139,17 +140,41 @@ const CancellationPortal = ({ user }) => {
                 )}
 
                 {/* Body */}
-                {isTotallyCancelled ? (
-                    <div style={{ textAlign: 'center', padding: '48px 0' }}>
-                        <p style={{ color: '#6b7280', fontSize: 16, marginBottom: 20 }}>
-                            This booking has been fully cancelled.
-                        </p>
-                        <button
-                            onClick={() => navigate('/movies')}
-                            className="btn-cancel-ghost"
-                        >
-                            Browse Movies
-                        </button>
+                {isTotallyCancelled || isPartiallyCancelled ? (
+                    <div style={{ padding: '24px 0' }}>
+                        {isPartiallyCancelled && (
+                            <div style={{
+                                background: 'rgba(255,165,0,0.2)',
+                                border: '1px solid rgba(255,165,0,0.3)',
+                                borderRadius: 8,
+                                padding: '14px 18px',
+                                marginBottom: 24,
+                                textAlign: 'center'
+                            }}>
+                                <p style={{ color: '#ffb732', fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1 }}>
+                                    ⚠️ Cancellation per booking allowed only once
+                                </p>
+                            </div>
+                        )}
+                        <h3 style={{ color: '#d1d5db', fontSize: 14, fontWeight: 500, marginBottom: 14 }}>
+                            Seat Status
+                        </h3>
+                        <div className="cancel-seat-grid">
+                            {booking.seats.map(bs => (
+                                <div key={bs.id} className={`cancel-seat-tile ${bs.status === 'Cancelled' ? 'selected-void' : ''}`} style={{ opacity: bs.status === 'Cancelled' ? 0.6 : 1, cursor: 'default' }}>
+                                    <span className="tile-label">{bs.status}</span>
+                                    <span className="tile-num">{bs.seat?.seat_number}</span>
+                                </div>
+                            ))}
+                        </div>
+                        <div style={{ textAlign: 'center', marginTop: 32 }}>
+                            <button
+                                onClick={() => navigate('/my-bookings')}
+                                className="btn-cancel-ghost"
+                            >
+                                Back to My Bookings
+                            </button>
+                        </div>
                     </div>
                 ) : (
                     <>
@@ -164,10 +189,10 @@ const CancellationPortal = ({ user }) => {
                                 textAlign: 'center'
                             }}>
                                 <p style={{ color: '#fca5a5', fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1 }}>
-                                    ⚠️ Cancellation Blocked
+                                    ⚠️ No Refund
                                 </p>
                                 <p style={{ color: '#9ca3af', fontSize: 12, marginTop: 4 }}>
-                                    Show starts within 1 hour — cancellations are locked.
+                                    Show starts within 1 hour — no money refund will be issued if you cancel now.
                                 </p>
                             </div>
                         )}
@@ -184,7 +209,6 @@ const CancellationPortal = ({ user }) => {
                                         key={bs.id}
                                         id={`void-seat-${bs.seat?.seat_number}`}
                                         onClick={() => handleToggle(bs.seat_id)}
-                                        disabled={isWithinOneHour}
                                         className={`cancel-seat-tile${isSelected ? ' selected-void' : ''}`}
                                     >
                                         <span className="tile-label">Seat</span>
@@ -199,8 +223,9 @@ const CancellationPortal = ({ user }) => {
                         <div className="policy-box">
                             <p className="policy-title">Cancellation Policy</p>
                             <ul>
-                                <li>• Cancellation within 1 hour of screening is NOT permitted.</li>
-                                <li>• NO financial refunds will be issued for any cancellation.</li>
+                                <li>• Cancellation per booking allowed only once (Full or Partial).</li>
+                                <li>• If cancelled within 1 hour of screening: No money refund.</li>
+                                <li>• If cancelled before 1 hour: Refund according to ticket will be initiated in about 2 days.</li>
                                 <li>• Voided seats are immediately released to the public.</li>
                             </ul>
                         </div>
@@ -222,7 +247,7 @@ const CancellationPortal = ({ user }) => {
                                 <button
                                     id="void-tickets-btn"
                                     onClick={handleCancel}
-                                    disabled={cancelling || selectedToCancel.length === 0 || isWithinOneHour}
+                                    disabled={cancelling || selectedToCancel.length === 0}
                                     className="btn-void"
                                 >
                                     {cancelling ? 'Processing...' : 'Void Tickets'}

@@ -91,6 +91,20 @@ const UserBookings = ({ user }) => {
                                         <p style={{ margin: 0, fontSize: 13, color: '#888' }}>
                                             Booking ID: #{b.booking_id} • Amount: ₹{b.total_amount}
                                         </p>
+                                        <div style={{ marginTop: 8, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                                            {b.seats.map(seatBooking => (
+                                                <span key={seatBooking.id} style={{
+                                                    fontSize: 11,
+                                                    padding: '2px 8px',
+                                                    borderRadius: 4,
+                                                    background: seatBooking.status === 'Active' ? '#e6f3e6' : '#ffe6e6',
+                                                    color: seatBooking.status === 'Active' ? '#2e7d32' : '#c62828',
+                                                    border: `1px solid ${seatBooking.status === 'Active' ? '#c8e6c9' : '#ffcdd2'}`
+                                                }}>
+                                                    Seat {seatBooking.seat.seat_number} {seatBooking.status !== 'Active' ? '(Voided)' : ''}
+                                                </span>
+                                            ))}
+                                        </div>
                                     </div>
 
                                     <div>

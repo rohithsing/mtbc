@@ -64,14 +64,22 @@ const MoviesList = ({ user }) => {
 
                 <div className="nav-spacer" />
 
-                <a
-                    href="/find-booking"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ color: '#fff', fontSize: 12, marginRight: 16, textDecoration: 'underline', opacity: 0.8 }}
-                >
-                    Cancel my ticket
-                </a>
+                <div style={{ display: 'flex', gap: 16, marginRight: 16, alignItems: 'center' }}>
+                    <a
+                        href="/my-bookings"
+                        style={{ color: '#cc0000', fontSize: 12, textDecoration: 'underline', fontWeight: 600 }}
+                    >
+                        My Bookings
+                    </a>
+                    <a
+                        href="/find-booking"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: '#fff', fontSize: 12, textDecoration: 'underline', opacity: 0.8 }}
+                    >
+                        Cancel my ticket
+                    </a>
+                </div>
 
                 <div className="nav-location">
                     <span>📍</span> Hyderabad
@@ -229,7 +237,7 @@ const MoviesList = ({ user }) => {
 
             {/* ── Footer ── */}
             <div className="bms-footer">
-                &copy; {new Date().getFullYear()} &nbsp;<span>BookMyShow</span>&nbsp; MTBC &mdash; All rights reserved
+                &copy; {new Date().getFullYear()} &nbsp;<span>PictureDekho</span>&nbsp; MTBC &mdash; All rights reserved
             </div>
         </div>
     );

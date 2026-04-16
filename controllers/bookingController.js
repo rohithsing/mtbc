@@ -169,18 +169,17 @@ exports.cancelBooking = async (req, res) => {
       return res.status(404).json({ error: "Booking not found" });
     }
 
-    if (booking.status === "Cancelled") {
-      return res.status(400).json({ error: "Booking already cancelled completely" });
+    if (booking.status === "Cancelled" || booking.status === "Partially Cancelled") {
+      return res.status(400).json({ error: "Cancellation per booking allowed only once" });
     }
 
     const currentTime = new Date();
     
-    // ❗ 1-Hour Rule: Prevent cancellation within 1 hour of screening — no refund
+    let refundStatus = "refund_initiated";
+    // ❗ 1-Hour Rule: Set refund status based on time difference
     const timeDiff = booking.show.show_time.getTime() - currentTime.getTime();
     if (timeDiff < 60 * 60 * 1000) {
-      return res.status(400).json({ 
-        error: "Cannot cancel within 1 hour of screening. No refund is applicable." 
-      });
+      refundStatus = "no_refund";
     }
 
     // Determine seats to cancel
@@ -229,7 +228,8 @@ exports.cancelBooking = async (req, res) => {
         newStatus === "Cancelled",
         remainingSeatNames,
         cancelledAt,
-        booking.booked_at
+        booking.booked_at,
+        refundStatus
       );
     } catch(err) {
       console.error("Email send error:", err.message);

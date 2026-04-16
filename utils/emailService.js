@@ -13,7 +13,7 @@ const transporter = nodemailer.createTransport({
 const MailGenerator = new Mailgen({
   theme: "default",
   product: {
-    name: "MTBC - Movie Ticket Booking",
+    name: "PictureDekho - Movie Ticket Booking",
     link: process.env.FRONTEND_URL || "http://localhost:5173",
   },
 });
@@ -78,12 +78,19 @@ exports.sendBookingConfirmationEmail = async (userEmail, userName, bookingId, to
   }
 };
 
-exports.sendCancellationEmail = async (userEmail, userName, bookingId, show, cancelledSeats, isFullyCancelled, remainingSeats, cancelledAt, bookedAt) => {
+exports.sendCancellationEmail = async (userEmail, userName, bookingId, show, cancelledSeats, isFullyCancelled, remainingSeats, cancelledAt, bookedAt, refundStatus) => {
   if (!userEmail || !process.env.EMAIL_USERNAME) return;
 
+  let refundMsg = "";
+  if (refundStatus === "refund_initiated") {
+    refundMsg = "Refund according to ticket will be initiated in about 2 days.";
+  } else {
+    refundMsg = "No money refund.";
+  }
+
   const intro = isFullyCancelled
-    ? "⚠️ Your booking has been fully cancelled. Refund will be issued within 2-3 working days."
-    : `⚠️ Partial cancellation processed. Seats cancelled: ${cancelledSeats.join(", ")}`;
+    ? `⚠️ Your booking has been fully cancelled. ${refundMsg}`
+    : `⚠️ Partial cancellation processed. Seats cancelled: ${cancelledSeats.join(", ")}. ${refundMsg}`;
 
   const tableData = [
     { item: "Booking ID", description: `#${bookingId}` },
@@ -113,8 +120,7 @@ exports.sendCancellationEmail = async (userEmail, userName, bookingId, show, can
       intro,
       table: { data: tableData },
       outro: [
-        "As per MTBC policy, no refunds are issued for cancellations before 1 hour of screening.",
-        "Cancellations within 1 hour of screening are strictly not permitted."
+        "Thank you for booking with PictureDekho!"
       ],
     },
   };
